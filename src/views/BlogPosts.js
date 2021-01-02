@@ -1,5 +1,4 @@
 /* eslint jsx-a11y/anchor-is-valid: 0 */
-
 import React from "react";
 import {
   Container,
@@ -11,6 +10,10 @@ import {
   Badge,
   Button
 } from "shards-react";
+import axios from "axios";
+import { PUBLIC_API } from "../utils/API";
+import moment from "moment";
+import parser from "html-react-parser"
 
 import PageTitle from "../components/common/PageTitle";
 
@@ -174,12 +177,34 @@ class BlogPosts extends React.Component {
     };
   }
 
+  componentDidMount = async () => {
+      let dataArticle = await axios(`${PUBLIC_API}/api/v1/posts`)
+      console.log(dataArticle, "<<< data article");
+      let PostListZero = await dataArticle.data.content.map(el => {
+        return {
+          backgroundImage: new URL(el.image_url),
+          author: el.author,
+          authorUrl: "#",
+          category: el.tags,
+          categoryUrl: "#",
+          title: el.title,
+          authorAvatar: require("../images/avatars/0.jpg"),
+          body:
+          parser(el.article.substring(0, 200) + `  <Link to="/">Read More...</Link>`),
+          date: moment(el.updatedAt).format('DD MMMM YYYY')
+        }
+      })
+      this.setState({
+        PostListZero
+      })
+  }
   render() {
     const {
       PostsListOne,
       PostsListTwo,
       PostsListThree,
-      PostsListFour
+      PostsListFour,
+      PostListZero
     } = this.state;
 
     return (
@@ -187,6 +212,45 @@ class BlogPosts extends React.Component {
         {/* Page Header */}
         <Row noGutters className="page-header py-4">
           <PageTitle sm="4" title="Blog Posts" subtitle="Components" className="text-sm-left" />
+        </Row>
+
+        {/* Zero Row of Posts */}
+        <Row>
+          {PostListZero && PostListZero.map((post, idx) => (
+            <Col lg="6" sm="12" className="mb-4" key={idx}>
+              <Card small className="card-post card-post--aside card-post--1 h-100">
+                <div
+                  className="card-post__image"
+                  style={{ backgroundImage: `url('${post.backgroundImage}')` }}
+                >
+                  <Badge
+                    pill
+                    className={`card-post__category bg-${post.categoryTheme}`}
+                  >
+                    {post.category}
+                  </Badge>
+                  <div className="card-post__author d-flex">
+                    <a
+                      href="#"
+                      className="card-post__author-avatar card-post__author-avatar--small"
+                      style={{ backgroundImage: `url('${post.authorAvatar}')` }}
+                    >
+                      Written by Anna Ken
+                    </a>
+                  </div>
+                </div>
+                <CardBody>
+                  <span className="text-muted mb-2">{post.date}</span>
+                  <h5 className="card-title">
+                    <a className="text-fiord-blue" href="#">
+                      {post.title}
+                    </a>
+                  </h5>
+                  <p className="card-text d-inline-block mb-3">{post.body}</p>
+                </CardBody>
+              </Card>
+            </Col>
+          ))}
         </Row>
 
         {/* First Row of Posts */}
